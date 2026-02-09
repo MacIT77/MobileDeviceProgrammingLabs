@@ -1,5 +1,7 @@
 package com.example.opengllabs.viewmodel
 
+import android.graphics.PixelFormat
+import android.opengl.GLSurfaceView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,8 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.opengllabs.data.News
+import com.example.opengllabs.render.MyGLRenderer
 
 @Composable
 fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
@@ -33,38 +37,66 @@ fun NewsScreen(viewModel: NewsViewModel = viewModel()) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0D1117))
-    ) {
-        Row(modifier = Modifier.weight(1f)) {
-            NewsQuadrant(
-                news = displayedNews.getOrNull(0),
-                likes = likesState[displayedNews.getOrNull(0)?.id] ?: 0,
-                onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(0)?.id ?: 0) },
-                modifier = Modifier.weight(1f)
-            )
-            NewsQuadrant(
-                news = displayedNews.getOrNull(1),
-                likes = likesState[displayedNews.getOrNull(1)?.id] ?: 0,
-                onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(1)?.id ?: 0) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Row(modifier = Modifier.weight(1f)) {
-            NewsQuadrant(
-                news = displayedNews.getOrNull(2),
-                likes = likesState[displayedNews.getOrNull(2)?.id] ?: 0,
-                onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(2)?.id ?: 0) },
-                modifier = Modifier.weight(1f)
-            )
-            NewsQuadrant(
-                news = displayedNews.getOrNull(3),
-                likes = likesState[displayedNews.getOrNull(3)?.id] ?: 0,
-                onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(3)?.id ?: 0) },
-                modifier = Modifier.weight(1f)
-            )
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Add GLSurfaceView as background
+        AndroidView(
+            factory = { context ->
+                GLSurfaceView(context).apply {
+                    setEGLContextClientVersion(2)
+                    holder.setFormat(PixelFormat.TRANSLUCENT)
+                    setZOrderOnTop(false)
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+
+                    setEGLConfigChooser(8, 8, 8, 8, 16, 0)
+
+                    setRenderer(MyGLRenderer(context))
+                    renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Transparent)
+        ) {
+            Row(modifier = Modifier.weight(1f)) {
+                NewsQuadrant(
+                    news = displayedNews.getOrNull(0),
+                    likes = likesState[displayedNews.getOrNull(0)?.id] ?: 0,
+                    onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(0)?.id ?: 0) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0x80000000))
+                )
+                NewsQuadrant(
+                    news = displayedNews.getOrNull(1),
+                    likes = likesState[displayedNews.getOrNull(1)?.id] ?: 0,
+                    onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(1)?.id ?: 0) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0x80000000))
+                )
+            }
+            Row(modifier = Modifier.weight(1f)) {
+                NewsQuadrant(
+                    news = displayedNews.getOrNull(2),
+                    likes = likesState[displayedNews.getOrNull(2)?.id] ?: 0,
+                    onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(2)?.id ?: 0) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0x80000000))
+                )
+                NewsQuadrant(
+                    news = displayedNews.getOrNull(3),
+                    likes = likesState[displayedNews.getOrNull(3)?.id] ?: 0,
+                    onLikeClick = { viewModel.incrementLikes(displayedNews.getOrNull(3)?.id ?: 0) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0x80000000))
+                )
+            }
         }
     }
 }
@@ -81,8 +113,8 @@ fun NewsQuadrant(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .border(2.dp, Color(0xFF30363D))
-            .background(Color(0xFF161B22))
+            .border(2.dp, Color(0xFF30363D).copy(alpha = 0.6f))
+            .background(Color(0xFF161B22).copy(alpha = 0.55f))
     ) {
         Box(
             modifier = Modifier
@@ -113,7 +145,7 @@ fun NewsQuadrant(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.1f)
-                .background(Color(0xFF21262D))
+                .background(Color(0xFF21262D).copy(alpha = 0.4f))
                 .clickable { onLikeClick() }
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
