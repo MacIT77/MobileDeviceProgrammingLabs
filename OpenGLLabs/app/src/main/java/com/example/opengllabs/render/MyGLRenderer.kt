@@ -38,7 +38,7 @@ class MyGLRenderer(private val context: Context) : GLSurfaceView.Renderer {
         square = Square()
         cube = Cube()
 
-        // Load texture (assume you have a drawable resource named "galaxy" in res/drawable)
+
         textureId = loadTexture(R.drawable.galaxy)
     }
 
@@ -58,10 +58,10 @@ class MyGLRenderer(private val context: Context) : GLSurfaceView.Renderer {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
-        // Set view matrix
+
         Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, -6f, 0f, 0f, 0f, 0f, 1f, 0f)
 
-        // Draw cube at center with rotation
+
         Matrix.setIdentityM(modelMatrix, 0)
         Matrix.scaleM(modelMatrix, 0, 0.5f, 0.5f, 0.5f)
         Matrix.translateM(modelMatrix, 0, 0f, 0f, -4.5f)
@@ -70,15 +70,15 @@ class MyGLRenderer(private val context: Context) : GLSurfaceView.Renderer {
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, mvpMatrix, 0)
         cube.draw(mvpMatrix)
 
-        // Draw background square
+
         Matrix.setIdentityM(modelMatrix, 0)
-        Matrix.translateM(modelMatrix, 0, 0f, 0f, -2f) // Move back slightly
-        Matrix.scaleM(modelMatrix, 0, 1f, 1f, 1f) // Scale to cover screen as background
+        Matrix.translateM(modelMatrix, 0, 0f, 0f, -2f)
+        Matrix.scaleM(modelMatrix, 0, 1f, 1f, 1f)
         Matrix.multiplyMM(mvpMatrix, 0, viewMatrix, 0, modelMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, mvpMatrix, 0)
         square.draw(mvpMatrix, textureId)
 
-        rotationAngle += 1f // Animate rotation
+        rotationAngle += 1f
     }
 
     private fun loadTexture(resourceId: Int): Int {
