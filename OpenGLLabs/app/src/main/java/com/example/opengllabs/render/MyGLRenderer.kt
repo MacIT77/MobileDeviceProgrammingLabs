@@ -32,7 +32,7 @@ class MyGLRenderer(private val context: Context) : GLSurfaceView.Renderer {
         GLES20.glDepthFunc(GLES20.GL_LEQUAL)
 
         square = Square()
-        solarSystem = SolarSystem()
+        solarSystem = SolarSystem(context)
         selectionCube = WireframeCube()
 
         textureId = loadTexture(R.drawable.galaxy)
