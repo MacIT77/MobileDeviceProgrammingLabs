@@ -62,14 +62,14 @@ class SolarSystem(private val context: Context) {
         PlanetData("Марс", 7.0f, 0.25f, floatArrayOf(0.8f, 0.3f, 0.1f, 1f), 0.8f, 1.8f, "mars"),
         PlanetData("Юпитер", 10.0f, 0.8f, floatArrayOf(0.8f, 0.7f, 0.5f, 1f), 0.4f, 4f, "jupiter"),
         PlanetData("Сатурн", 13.0f, 0.7f, floatArrayOf(0.9f, 0.8f, 0.6f, 1f), 0.3f, 3.5f, "saturn",
-            hasRings = true, ringTextureName = "saturn_rings", ringInnerRadius = 1.0f, ringOuterRadius = 1.8f),
+            hasRings = true, ringTextureName = "saturn_rings", ringInnerRadius = 1.7f, ringOuterRadius = 3.2f),
         PlanetData("Уран", 16.0f, 0.5f, floatArrayOf(0.4f, 0.8f, 0.9f, 1f), 0.2f, 2.5f, "uranus"),
         PlanetData("Нептун", 19.0f, 0.48f, floatArrayOf(0.2f, 0.4f, 0.9f, 1f), 0.1f, 2.3f, "neptune")
     )
 
     private val orbitAngles = FloatArray(planetData.size) { 0f }
     private val rotationAngles = FloatArray(planetData.size) { 0f }
-    private var moonAngle = 90f
+    private var moonAngle = 0f
     private val moonOrbitTilt = 5.15f
     private val saturnRingTilt = 26.7f
 
@@ -96,8 +96,8 @@ class SolarSystem(private val context: Context) {
             if (data.hasRings) {
                 saturnRings = SaturnRings(
                     context = context,
-                    innerRadius = data.size * data.ringInnerRadius,
-                    outerRadius = data.size * data.ringOuterRadius,
+                    innerRadius = data.ringInnerRadius,
+                    outerRadius = data.ringOuterRadius,
                     textureResId = data.ringTextureName?.let { textureMap[it] }
                 )
             }
@@ -164,12 +164,16 @@ class SolarSystem(private val context: Context) {
                 val moonMatrix = FloatArray(16)
                 Matrix.setIdentityM(moonMatrix, 0)
                 Matrix.translateM(moonMatrix, 0, x, 0f, z)
-                Matrix.rotateM(moonMatrix, 0, moonOrbitTilt, 1f, 0f, 0f)
+
+                val earthAngleRad = Math.toRadians(orbitAngles[index].toDouble())
+                val perpX = (-sin(earthAngleRad)).toFloat()
+                val perpZ = (cos(earthAngleRad)).toFloat()
 
                 val moonRad = Math.toRadians(moonAngle.toDouble())
-                val mx = (data.moonDistance * cos(moonRad)).toFloat()
-                val mz = (data.moonDistance * sin(moonRad)).toFloat()
-                Matrix.translateM(moonMatrix, 0, mx, 0f, mz)
+                val mx = (data.moonDistance * cos(moonRad) * perpX).toFloat()
+                val my = (data.moonDistance * sin(moonRad)).toFloat()
+                val mz = (data.moonDistance * cos(moonRad) * perpZ).toFloat()
+                Matrix.translateM(moonMatrix, 0, mx, my, mz)
 
                 Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, moonMatrix, 0)
                 Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
