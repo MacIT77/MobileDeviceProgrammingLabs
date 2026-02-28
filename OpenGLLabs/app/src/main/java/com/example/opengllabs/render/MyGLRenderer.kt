@@ -6,6 +6,8 @@ import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.opengl.GLUtils
 import android.opengl.Matrix
+import android.os.Handler
+import android.os.Looper
 import com.example.opengllabs.R
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -23,6 +25,7 @@ class MyGLRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     private var textureId: Int = 0
     private var time = 0f
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     var onPlanetSelected: ((String) -> Unit)? = null
 
@@ -81,18 +84,38 @@ class MyGLRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val modelMatrix = FloatArray(16)
         val tempMatrix = FloatArray(16)
 
-        val data = solarSystem.getSelectedPlanetData()
-        val index = solarSystem.selectedPlanetIndex
+        if (solarSystem.isMoonSelected) {
+            val earthIndex = 2
+            val earthData = solarSystem.planetData[earthIndex]
+            val earthRad = Math.toRadians(solarSystem.orbitAngles[earthIndex].toDouble())
+            val ex = (earthData.distance * cos(earthRad)).toFloat()
+            val ez = (earthData.distance * sin(earthRad)).toFloat()
+            val moonRad = Math.toRadians(solarSystem.moonAngle.toDouble())
+            val perpX = (-sin(earthRad)).toFloat()
+            val perpZ = cos(earthRad).toFloat()
+            val mx = ex + (earthData.moonDistance * cos(moonRad) * perpX).toFloat()
+            val my = (earthData.moonDistance * sin(moonRad)).toFloat()
+            val mz = ez + (earthData.moonDistance * cos(moonRad) * perpZ).toFloat()
 
-        val rad = Math.toRadians(solarSystem.getOrbitAngle(index).toDouble())
-        val x = (data.distance * cos(rad)).toFloat()
-        val z = (data.distance * sin(rad)).toFloat()
+            Matrix.setIdentityM(modelMatrix, 0)
+            Matrix.translateM(modelMatrix, 0, mx, my, mz)
+            val scale = 0.12f * 2.5f + 0.1f * sin(time * 3f)
+            Matrix.scaleM(modelMatrix, 0, scale, scale, scale)
+        } else {
 
-        Matrix.setIdentityM(modelMatrix, 0)
-        Matrix.translateM(modelMatrix, 0, x, 0f, z)
+            val data = solarSystem.getSelectedPlanetData()
+            val index = solarSystem.selectedPlanetIndex
 
-        val scale = data.size * 2.5f + 0.1f * kotlin.math.sin(time * 3f)
-        Matrix.scaleM(modelMatrix, 0, scale, scale, scale)
+            val rad = Math.toRadians(solarSystem.getOrbitAngle(index).toDouble())
+            val x = (data.distance * cos(rad)).toFloat()
+            val z = (data.distance * sin(rad)).toFloat()
+
+            Matrix.setIdentityM(modelMatrix, 0)
+            Matrix.translateM(modelMatrix, 0, x, 0f, z)
+
+            val scale = data.size * 2.5f + 0.1f * kotlin.math.sin(time * 3f)
+            Matrix.scaleM(modelMatrix, 0, scale, scale, scale)
+        }
 
         Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
@@ -103,15 +126,19 @@ class MyGLRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     fun selectNextPlanet() {
         solarSystem.selectNextPlanet()
-        onPlanetSelected?.invoke(solarSystem.getSelectedPlanetInfo())
+        val info = solarSystem.getSelectedPlanetInfo()
+        mainHandler.post { onPlanetSelected?.invoke(info) }
     }
 
     fun selectPreviousPlanet() {
         solarSystem.selectPreviousPlanet()
-        onPlanetSelected?.invoke(solarSystem.getSelectedPlanetInfo())
+        val info = solarSystem.getSelectedPlanetInfo()
+        mainHandler.post { onPlanetSelected?.invoke(info) }
     }
 
     fun getSelectedPlanetInfo(): String = solarSystem.getSelectedPlanetInfo()
+
+    fun isMoonSelected(): Boolean = solarSystem.isMoonSelected
 
     private fun loadTexture(resourceId: Int): Int {
         val textureHandle = IntArray(1)

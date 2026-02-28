@@ -67,13 +67,14 @@ class SolarSystem(private val context: Context) {
         PlanetData("Нептун", 19.0f, 0.48f, floatArrayOf(0.2f, 0.4f, 0.9f, 1f), 0.1f, 2.3f, "neptune")
     )
 
-    private val orbitAngles = FloatArray(planetData.size) { 0f }
+    public val orbitAngles = FloatArray(planetData.size) { 0f }
     private val rotationAngles = FloatArray(planetData.size) { 0f }
-    private var moonAngle = 0f
+    public var moonAngle = 0f
     private val moonOrbitTilt = 5.15f
     private val saturnRingTilt = 26.7f
 
     var selectedPlanetIndex = 2
+    var isMoonSelected = false
 
     init {
         sun = Sphere(
@@ -125,11 +126,12 @@ class SolarSystem(private val context: Context) {
         val tempMatrix = FloatArray(16)
 
         val lightPos = floatArrayOf(0f, 0f, 0f)
+        val viewPos = floatArrayOf(0f, 12f, -20f)
 
         Matrix.setIdentityM(modelMatrix, 0)
         Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
-        sun.draw(mvpMatrix, lightPos, true)
+        sun.draw(mvpMatrix, lightPos, true, viewPos)
 
         planetData.forEachIndexed { index, data ->
             Matrix.setIdentityM(modelMatrix, 0)
@@ -144,7 +146,7 @@ class SolarSystem(private val context: Context) {
             Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0)
             Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
 
-            planets[index].draw(mvpMatrix, lightPos, false)
+            planets[index].draw(mvpMatrix, lightPos, false, viewPos)
 
             if (data.hasRings) {
                 val ringMatrix = FloatArray(16)
@@ -178,23 +180,42 @@ class SolarSystem(private val context: Context) {
                 Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, moonMatrix, 0)
                 Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
 
-                moon.draw(mvpMatrix, lightPos, false)
+                moon.draw(mvpMatrix, lightPos, false, viewPos)
             }
         }
     }
 
     fun selectNextPlanet() {
-        selectedPlanetIndex = (selectedPlanetIndex + 1) % planetData.size
+        if (selectedPlanetIndex == 2 && !isMoonSelected) {
+            isMoonSelected = true
+        } else if (isMoonSelected) {
+            isMoonSelected = false
+            selectedPlanetIndex = 3 // Move to Mars
+        } else {
+            selectedPlanetIndex = (selectedPlanetIndex + 1) % planetData.size
+        }
     }
 
     fun selectPreviousPlanet() {
-        selectedPlanetIndex = if (selectedPlanetIndex > 0) selectedPlanetIndex - 1 else planetData.size - 1
+        if (selectedPlanetIndex == 3 && !isMoonSelected) {
+            isMoonSelected = true
+        } else if (isMoonSelected) {
+            isMoonSelected = false
+            selectedPlanetIndex = 2 // Back to Earth
+        } else {
+            selectedPlanetIndex =
+                if (selectedPlanetIndex > 0) selectedPlanetIndex - 1 else planetData.size - 1
+        }
     }
 
     fun getSelectedPlanetInfo(): String {
-        val data = planetData[selectedPlanetIndex]
-        val ringsInfo = if (data.hasRings) " (с кольцами)" else ""
-        return "${data.name}$ringsInfo\nРасстояние: ${data.distance} а.е.\nРазмер: ${data.size}"
+        if (isMoonSelected) {
+            return "Луна\nРасстояние от Земли: 0.6\nРазмер: 0.12"
+        } else {
+            val data = planetData[selectedPlanetIndex]
+            val ringsInfo = if (data.hasRings) " (с кольцами)" else ""
+            return "${data.name}$ringsInfo\nРасстояние: ${data.distance} а.е.\nРазмер: ${data.size}"
+        }
     }
 
     fun getSelectedPlanetData(): PlanetData = planetData[selectedPlanetIndex]

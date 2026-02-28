@@ -41,7 +41,9 @@ class Sphere(
         varying vec2 vTexCoord;
         uniform vec4 uColor;
         uniform vec3 uLightPos;
+        uniform vec3 uViewPos;
         uniform float uIsEmissive;
+        uniform float uUseSpecular;
         uniform sampler2D uTexture;
         uniform float uUseTexture;
         
@@ -221,7 +223,7 @@ class Sphere(
         return textureId
     }
 
-    fun draw(mvpMatrix: FloatArray, lightPos: FloatArray, isEmissive: Boolean = false) {
+    fun draw(mvpMatrix: FloatArray, lightPos: FloatArray, isEmissive: Boolean = false, viewPos: FloatArray = floatArrayOf(0f, 0f, 0f), useSpecular: Boolean = false) {
         GLES20.glUseProgram(program)
 
         val positionHandle = GLES20.glGetAttribLocation(program, "vPosition")
@@ -230,7 +232,9 @@ class Sphere(
         val mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix")
         val colorHandle = GLES20.glGetUniformLocation(program, "uColor")
         val lightPosHandle = GLES20.glGetUniformLocation(program, "uLightPos")
+        val viewPosHandle = GLES20.glGetUniformLocation(program, "uViewPos")
         val isEmissiveHandle = GLES20.glGetUniformLocation(program, "uIsEmissive")
+        val useSpecularHandle = GLES20.glGetAttribLocation(program, "uUseSpecular")
         val textureHandle = GLES20.glGetUniformLocation(program, "uTexture")
         val useTextureHandle = GLES20.glGetUniformLocation(program, "uUseTexture")
 
@@ -239,6 +243,8 @@ class Sphere(
         GLES20.glUniform3fv(lightPosHandle, 1, lightPos, 0)
         GLES20.glUniform1f(isEmissiveHandle, if (isEmissive) 1.0f else 0.0f)
         GLES20.glUniform1f(useTextureHandle, if (textureResId != null) 1.0f else 0.0f)
+        GLES20.glUniform3fv(viewPosHandle, 1, viewPos, 0)
+        GLES20.glUniform1f(useSpecularHandle, if(useSpecular) 1.0f else 0.0f)
 
         // Привязываем текстуру
         if (textureResId != null) {
